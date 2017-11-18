@@ -11,58 +11,72 @@ import UIKit
 @IBDesignable
 public class StepView: UIView {
 
-    @IBInspectable public var count: Int = 3 { didSet { setNeedsDisplay() } }
-    public private (set) var currentIndex: Int = 0
+    @IBInspectable public var numberOfSteps: Int = 3 { didSet { setNeedsDisplay() } }
+    @IBInspectable public var currentNumber: Int = 3 {
+        didSet {
+            if (currentNumber < 1) { currentNumber = 1; return }
+            if (currentNumber > numberOfSteps) { currentNumber = numberOfSteps; return }
+            setNeedsDisplay()
+        }
+    }
     
     @IBInspectable public var pointRaidus: CGFloat = 4 { didSet { setNeedsDisplay() } }
     @IBInspectable public var lineWidth: CGFloat = 1 { didSet { setNeedsDisplay() } }
     @IBInspectable public var delt: CGFloat = 2 { didSet { setNeedsDisplay() } }
     
+    @IBInspectable public var color: UIColor = .lightGray { didSet { setNeedsDisplay() } }
+    @IBInspectable public var doingColor: UIColor = .blue { didSet { setNeedsDisplay() } }
+    
     // MARK: - Drawing
+    private var pointDiameter: CGFloat { return 2 * pointRaidus }
+    private var halfOfHeight: CGFloat { return bounds.size.height / 2 }
     
     private var lineLength: CGFloat {
-        return (bounds.size.width - 3 * 2 * pointRaidus - CGFloat(count - 1) * 2 * delt) / CGFloat(count - 1)
+        return (bounds.size.width - CGFloat(numberOfSteps)*pointDiameter - CGFloat(numberOfSteps-1) * 2 * delt) / CGFloat(numberOfSteps - 1)
     }
 
     public override func draw(_ rect: CGRect) {
-		drawPoints()
-        drawLines()
+		drawPointsWith(count: numberOfSteps, color: color)
+        drawLinesWith(count: numberOfSteps, color: color)
+        
+        drawPointsWith(count: currentNumber, color: doingColor)
+        drawLinesWith(count: currentNumber, color: doingColor)
     }
     
-    private func drawPoints() {
+    private func drawPointsWith(count: Int, color: UIColor) {
         let path = UIBezierPath()
         
         // draw points
         for i in 0 ..< count {
             var point: CGPoint = .zero
-            point.x = pointRaidus + (lineLength + pointRaidus * 2 + delt * 2) * CGFloat(i)
-            point.y = bounds.size.height / 2
+            point.x = pointRaidus + (lineLength + pointDiameter + delt * 2) * CGFloat(i)
+            point.y = halfOfHeight
             
             path.addArc(withCenter: point, radius: pointRaidus, startAngle: 0, endAngle: CGFloat.pi*2, clockwise: true)
         }
         
-        UIColor.white.setStroke()
-        UIColor.white.setFill()
+        color.setStroke()
+        color.setFill()
         
         path.fill()
     }
     
-    private func drawLines() {
+    private func drawLinesWith(count: Int, color: UIColor) {
         let path = UIBezierPath()
         path.lineWidth = lineWidth
         path.lineCapStyle = .round
         
         // draw line
         for i in 0 ..< (count - 1) {
-            let start = CGPoint(x: (2*pointRaidus + delt) + (lineLength + 2*pointRaidus + delt*2) * CGFloat(i), y: bounds.size.height / 2)
-            let end = CGPoint(x: (2*pointRaidus + lineLength + delt) + (lineLength + 2*pointRaidus + delt*2) * CGFloat(i), y: bounds.size.height / 2)
+            let start = CGPoint(x: (pointDiameter + delt) + (lineLength + pointDiameter + delt*2) * CGFloat(i), y: halfOfHeight)
+            let end = CGPoint(x: (pointDiameter + lineLength + delt) + (lineLength + pointDiameter + delt*2) * CGFloat(i), y: halfOfHeight)
             
             path.move(to: start)
             path.addLine(to: end)
         }
         
-        UIColor.white.setStroke()
-        UIColor.white.setFill()
+        color.setStroke()
+        color.setFill()
         
         path.stroke()
     }
